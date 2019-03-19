@@ -9,11 +9,12 @@
  */
 
 #include <stdio.h>
+#include <vector>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
 
 const float FPS = 60;
 
@@ -46,27 +47,66 @@ void handle_key_up(ALLEGRO_EVENT evt) {
   if (keycode == ALLEGRO_KEY_RIGHT) pressed_keys[KEY_RIGHT] = false;
 }
 
-class Line {
-  ALLEGRO_COLOR color;
-  float x;
-
+class Point {
   public:
-    Line (int, int, int);
-    void draw(void);
+    float x, y;
+    Point (float _x, float _y) { x = _x; y = _y; }
 };
 
-Line::Line (int r, int g, int b) {
-  color = al_map_rgb(r, g, b);
-  x = 0;
+class Line {
+  ALLEGRO_COLOR color;
+  std::vector<Point> positions;
+  float THICKNESS;
+  float speed;
+
+  public:
+    float current_x, current_y;
+    Line (ALLEGRO_COLOR);
+    void draw(void);
+    void update(void);
+    void remember_position(Point);
+};
+
+Line::Line (ALLEGRO_COLOR c) {
+  color = c;
+  THICKNESS = 2;
+  speed = 5;
+}
+
+void Line::remember_position(Point new_pos) {
+  this->positions.push_back(new_pos);
+}
+
+void Line::update() {
+  this->current_x += this->speed;
+  this->current_y += this->speed;
 }
 
 void Line::draw() {
-  al_draw_line(this->x, 0, this->x, SCREEN_HEIGHT, this->color, 1);
+  float prev_x = 0, prev_y = 0, x = 0, y = 0;
+  bool first_run = true;
 
-  this->x += 10;
-  if (this->x > SCREEN_WIDTH) {
-    this->x = 0;
+  for (std::vector<Point>::iterator iter = this->positions.begin();
+      iter != this->positions.end();
+      ++iter) {
+
+    if (first_run) {
+      prev_x = (*iter).x;
+      prev_y = (*iter).y;
+
+      first_run = false;
+    } else {
+      x = (*iter).x;
+      y = (*iter).y;
+
+      al_draw_line(prev_x, prev_y, x, y, this->color, this->THICKNESS);
+
+      prev_x = x;
+      prev_y = y;
+    }
   }
+
+  al_draw_line(prev_x, prev_y, this->current_x, this->current_y, this->color, this->THICKNESS);
 }
 
 int main(int argc, char *argv[])
@@ -115,7 +155,12 @@ int main(int argc, char *argv[])
   al_start_timer(timer);
 
   // Initialise our line object for drawing
-  Line line (255, 255, 255);
+  Line line (al_map_rgb(255, 255, 255));
+
+  line.remember_position(Point(900, 10));
+  line.remember_position(Point(100, 150));
+  line.remember_position(Point(200, 150));
+  line.remember_position(Point(800, 400));
 
   // Game loop
   while (!should_quit_game) {
@@ -149,12 +194,13 @@ int main(int argc, char *argv[])
       }
     }
 
+    line.update();
+
     // Check if we need to redraw
     if (redraw && al_is_event_queue_empty(event_queue)) {
       // Redraw
       al_clear_to_color(al_map_rgb(0, 0, 0));
 
-      // Drawing a line here!
       line.draw();
 
       al_flip_display();
