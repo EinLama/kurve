@@ -86,7 +86,7 @@ void Line::draw() {
   float prev_x = 0, prev_y = 0, x = 0, y = 0;
   bool first_run = true;
 
-  for (std::vector<Point>::iterator iter = this->positions.begin();
+  for (auto iter = this->positions.begin();
       iter != this->positions.end();
       ++iter) {
 
