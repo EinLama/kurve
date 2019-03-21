@@ -9,12 +9,22 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 #include <vector>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 960
+
+#define DIR_RIGHT 0
+#define DIR_DOWN_RIGHT 45
+#define DIR_DOWN 90
+#define DIR_DOWN_LEFT 135
+#define DIR_LEFT 180
+#define DIR_UP_LEFT 225
+#define DIR_UP 270
+#define DIR_UP_RIGHT 315
 
 const float FPS = 60;
 
@@ -24,19 +34,24 @@ ALLEGRO_TIMER *timer = NULL;
 
 bool should_quit_game = false;
 
-enum OBSERVED_KEYS {
-  KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN
+enum KURVE_KEYS {
+  KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN,
+  KEY_A, KEY_S
 };
 
-bool pressed_keys[4];
+bool pressed_keys[6];
 
 void handle_key_down(ALLEGRO_EVENT evt) {
   int keycode = evt.keyboard.keycode;
   if (keycode == ALLEGRO_KEY_ESCAPE) should_quit_game = true;
+
   if (keycode == ALLEGRO_KEY_LEFT) pressed_keys[KEY_LEFT] = true;
   if (keycode == ALLEGRO_KEY_DOWN) pressed_keys[KEY_DOWN] = true;
   if (keycode == ALLEGRO_KEY_UP) pressed_keys[KEY_UP] = true;
   if (keycode == ALLEGRO_KEY_RIGHT) pressed_keys[KEY_RIGHT] = true;
+
+  if (keycode == ALLEGRO_KEY_A) pressed_keys[KEY_A] = true;
+  if (keycode == ALLEGRO_KEY_S) pressed_keys[KEY_S] = true;
 }
 
 void handle_key_up(ALLEGRO_EVENT evt) {
@@ -45,6 +60,9 @@ void handle_key_up(ALLEGRO_EVENT evt) {
   if (keycode == ALLEGRO_KEY_DOWN) pressed_keys[KEY_DOWN] = false;
   if (keycode == ALLEGRO_KEY_UP) pressed_keys[KEY_UP] = false;
   if (keycode == ALLEGRO_KEY_RIGHT) pressed_keys[KEY_RIGHT] = false;
+
+  if (keycode == ALLEGRO_KEY_A) pressed_keys[KEY_A] = false;
+  if (keycode == ALLEGRO_KEY_S) pressed_keys[KEY_S] = false;
 }
 
 class Point {
@@ -56,30 +74,62 @@ class Point {
 class Line {
   ALLEGRO_COLOR color;
   std::vector<Point> positions;
-  float THICKNESS;
-  float speed;
+  float THICKNESS, speed, angle;
+  KURVE_KEYS left_key, right_key;
 
   public:
-    float current_x, current_y;
-    Line (ALLEGRO_COLOR);
-    void draw(void);
-    void update(void);
-    void remember_position(Point);
+  float current_x, current_y;
+  Line (ALLEGRO_COLOR, KURVE_KEYS, KURVE_KEYS);
+  void draw(void);
+  void steer(float);
+  void update(void);
+  void remember_position(Point);
+  void remember_current_position(void);
 };
 
-Line::Line (ALLEGRO_COLOR c) {
+Line::Line (ALLEGRO_COLOR c, KURVE_KEYS left, KURVE_KEYS right) {
   color = c;
-  THICKNESS = 2;
-  speed = 5;
+  THICKNESS = 4;
+  speed = 3;
+  angle = DIR_DOWN_RIGHT;
+
+  left_key = left;
+  right_key = right;
 }
 
 void Line::remember_position(Point new_pos) {
   this->positions.push_back(new_pos);
 }
 
+void Line::remember_current_position() {
+  this->remember_position(Point(this->current_x, this->current_y));
+}
+
 void Line::update() {
-  this->current_x += this->speed;
-  this->current_y += this->speed;
+  // Move
+  float delta_x = cos(this->angle * M_PI / 180) * this->speed;
+  float delta_y = sin(this->angle * M_PI / 180) * this->speed;
+
+  this->current_x += delta_x;
+  this->current_y += delta_y;
+
+  // Be controlled:
+  if (pressed_keys[this->left_key]) {
+    this->steer(-1);
+    this->remember_current_position();
+  } else if (pressed_keys[this->right_key]) {
+    this->steer(1);
+    this->remember_current_position();
+  }
+}
+
+void Line::steer(float direction) {
+  const float MAX_ANGLE_CHANGE = 2;
+
+  this->angle += MAX_ANGLE_CHANGE * direction;
+  this->angle = fmod(this->angle, 360);
+
+  if (this->angle < 0) { this->angle += 360; }
 }
 
 void Line::draw() {
@@ -154,13 +204,23 @@ int main(int argc, char *argv[])
   // Start the timer
   al_start_timer(timer);
 
-  // Initialise our line object for drawing
-  Line line (al_map_rgb(255, 255, 255));
+  // All of our players!
+  std::vector<Line> players;
 
-  line.remember_position(Point(900, 10));
-  line.remember_position(Point(100, 150));
-  line.remember_position(Point(200, 150));
-  line.remember_position(Point(800, 400));
+  // Initialise our line object for drawing
+  Line line (al_map_rgb(255, 100, 100), KEY_LEFT, KEY_RIGHT);
+  Line line2 (al_map_rgb(100, 255, 100), KEY_A, KEY_S);
+
+  line.current_x = 100; // Spawn here
+  line.current_y = 200;
+  line.remember_position(Point(100, 200)); // starting position
+
+  line2.current_x = 300; // Spawn here
+  line2.current_y = 400;
+  line2.remember_position(Point(300, 400)); // starting position
+
+  players.push_back(line);
+  players.push_back(line2);
 
   // Game loop
   while (!should_quit_game) {
@@ -189,19 +249,23 @@ int main(int argc, char *argv[])
           handle_key_up(event);
           break;
         default:
-          fprintf(stderr, "Unsupported event received: %d\n", event.type);
+          //fprintf(stderr, "Unsupported event received: %d\n", event.type);
           break;
       }
     }
 
-    line.update();
+    for (auto player = players.begin(); player != players.end(); ++player) {
+      player->update();
+    }
 
     // Check if we need to redraw
     if (redraw && al_is_event_queue_empty(event_queue)) {
       // Redraw
-      al_clear_to_color(al_map_rgb(0, 0, 0));
+      al_clear_to_color(al_map_rgb(50, 50, 50));
 
-      line.draw();
+      for (auto player = players.begin(); player != players.end(); ++player) {
+        player->draw();
+      }
 
       al_flip_display();
       redraw = false;
