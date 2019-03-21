@@ -80,6 +80,7 @@ class Line {
   public:
   float current_x, current_y;
   Line (ALLEGRO_COLOR, KURVE_KEYS, KURVE_KEYS);
+  void spawn(Point);
   void draw(void);
   void steer(float);
   void update(void);
@@ -95,6 +96,13 @@ Line::Line (ALLEGRO_COLOR c, KURVE_KEYS left, KURVE_KEYS right) {
 
   left_key = left;
   right_key = right;
+}
+
+void Line::spawn(Point position) {
+  this->current_x = position.x;
+  this->current_y = position.y;
+
+  this->remember_position(position);
 }
 
 void Line::remember_position(Point new_pos) {
@@ -211,13 +219,8 @@ int main(int argc, char *argv[])
   Line line (al_map_rgb(255, 100, 100), KEY_LEFT, KEY_RIGHT);
   Line line2 (al_map_rgb(100, 255, 100), KEY_A, KEY_S);
 
-  line.current_x = 100; // Spawn here
-  line.current_y = 200;
-  line.remember_position(Point(100, 200)); // starting position
-
-  line2.current_x = 300; // Spawn here
-  line2.current_y = 400;
-  line2.remember_position(Point(300, 400)); // starting position
+  line.spawn(Point(100, 200));
+  line2.spawn(Point(300, 400));
 
   players.push_back(line);
   players.push_back(line2);
