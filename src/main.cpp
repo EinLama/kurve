@@ -14,31 +14,15 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 960
-
-#define DIR_RIGHT 0
-#define DIR_DOWN_RIGHT 45
-#define DIR_DOWN 90
-#define DIR_DOWN_LEFT 135
-#define DIR_LEFT 180
-#define DIR_UP_LEFT 225
-#define DIR_UP 270
-#define DIR_UP_RIGHT 315
-
-const double FPS = 60;
+#include "engine.h"
+#include "line.h"
 
 ALLEGRO_DISPLAY *display = NULL;
 ALLEGRO_EVENT_QUEUE *event_queue = NULL;
 ALLEGRO_TIMER *timer = NULL;
 
+const double FPS = 60;
 bool should_quit_game = false;
-
-enum KURVE_KEYS {
-  KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN,
-  KEY_A, KEY_S
-};
-
 bool pressed_keys[6];
 
 void handle_key_down(ALLEGRO_EVENT evt) {
@@ -65,107 +49,6 @@ void handle_key_up(ALLEGRO_EVENT evt) {
   if (keycode == ALLEGRO_KEY_S) pressed_keys[KEY_S] = false;
 }
 
-class Point {
-  public:
-    double x, y;
-    Point (double _x, double _y) { x = _x; y = _y; }
-};
-
-class Line {
-  ALLEGRO_COLOR color;
-  std::vector<Point> positions;
-  double THICKNESS, speed, angle;
-  KURVE_KEYS left_key, right_key;
-
-  public:
-  double current_x, current_y;
-  Line (ALLEGRO_COLOR, KURVE_KEYS, KURVE_KEYS);
-  void spawn(Point);
-  void draw(void);
-  void steer(double);
-  void update(void);
-  void remember_position(Point);
-  void remember_current_position(void);
-};
-
-Line::Line (ALLEGRO_COLOR c, KURVE_KEYS left, KURVE_KEYS right) {
-  color = c;
-  THICKNESS = 4;
-  speed = 3;
-  angle = DIR_DOWN_RIGHT;
-
-  left_key = left;
-  right_key = right;
-}
-
-void Line::spawn(Point position) {
-  this->current_x = position.x;
-  this->current_y = position.y;
-
-  this->remember_position(position);
-}
-
-void Line::remember_position(Point new_pos) {
-  this->positions.push_back(new_pos);
-}
-
-void Line::remember_current_position() {
-  this->remember_position(Point(this->current_x, this->current_y));
-}
-
-void Line::update() {
-  // Move
-  double delta_x = cos(this->angle * M_PI / 180) * this->speed;
-  double delta_y = sin(this->angle * M_PI / 180) * this->speed;
-
-  this->current_x += delta_x;
-  this->current_y += delta_y;
-
-  // Be controlled:
-  if (pressed_keys[this->left_key]) {
-    this->steer(-1);
-    this->remember_current_position();
-  } else if (pressed_keys[this->right_key]) {
-    this->steer(1);
-    this->remember_current_position();
-  }
-}
-
-void Line::steer(double direction) {
-  const double MAX_ANGLE_CHANGE = 2;
-
-  this->angle += MAX_ANGLE_CHANGE * direction;
-  this->angle = fmod(this->angle, 360);
-
-  if (this->angle < 0) { this->angle += 360; }
-}
-
-void Line::draw() {
-  double prev_x = 0, prev_y = 0, x = 0, y = 0;
-  bool first_run = true;
-
-  for (auto iter = this->positions.begin();
-      iter != this->positions.end();
-      ++iter) {
-
-    if (first_run) {
-      prev_x = (*iter).x;
-      prev_y = (*iter).y;
-
-      first_run = false;
-    } else {
-      x = (*iter).x;
-      y = (*iter).y;
-
-      al_draw_line(prev_x, prev_y, x, y, this->color, this->THICKNESS);
-
-      prev_x = x;
-      prev_y = y;
-    }
-  }
-
-  al_draw_line(prev_x, prev_y, this->current_x, this->current_y, this->color, this->THICKNESS);
-}
 
 int main(int argc, char *argv[])
 {
@@ -258,7 +141,7 @@ int main(int argc, char *argv[])
     }
 
     for (auto player = players.begin(); player != players.end(); ++player) {
-      player->update();
+      player->update(pressed_keys);
     }
 
     // Check if we need to redraw
