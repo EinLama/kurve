@@ -1,13 +1,10 @@
 #include "line.h"
 
-Line::Line (ALLEGRO_COLOR c, KURVE_KEYS left, KURVE_KEYS right) {
-  color = c;
-  THICKNESS = 4;
-  speed = 3;
-  angle = DIR_DOWN_RIGHT;
+Line::Line (ALLEGRO_COLOR c, KURVE_KEYS left, KURVE_KEYS right) :
+  color(c), positions(), THICKNESS(4), speed(3), angle(DIR_DOWN_RIGHT),
+  left_key(left), right_key(right),
+  alive(true), current_x(0), current_y(0) {
 
-  left_key = left;
-  right_key = right;
 }
 
 void Line::spawn(Point position) {

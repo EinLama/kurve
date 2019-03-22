@@ -8,13 +8,15 @@
 #include "engine.h"
 
 class Line {
+  private:
   ALLEGRO_COLOR color;
   std::vector<Point> positions;
   double THICKNESS, speed, angle;
   KURVE_KEYS left_key, right_key;
+  bool alive;
+  double current_x, current_y;
 
   public:
-  double current_x, current_y;
   Line (ALLEGRO_COLOR, KURVE_KEYS, KURVE_KEYS);
   void spawn(Point);
   void draw(void);
