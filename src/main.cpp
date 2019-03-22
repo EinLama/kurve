@@ -23,7 +23,7 @@ ALLEGRO_TIMER *timer = NULL;
 
 const double FPS = 60;
 bool should_quit_game = false;
-bool pressed_keys[6];
+bool pressed_keys[6] = {}; // set all to false
 
 void handle_key_down(ALLEGRO_EVENT evt) {
   int keycode = evt.keyboard.keycode;
