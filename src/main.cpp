@@ -26,7 +26,7 @@
 #define DIR_UP 270
 #define DIR_UP_RIGHT 315
 
-const float FPS = 60;
+const double FPS = 60;
 
 ALLEGRO_DISPLAY *display = NULL;
 ALLEGRO_EVENT_QUEUE *event_queue = NULL;
@@ -67,22 +67,22 @@ void handle_key_up(ALLEGRO_EVENT evt) {
 
 class Point {
   public:
-    float x, y;
-    Point (float _x, float _y) { x = _x; y = _y; }
+    double x, y;
+    Point (double _x, double _y) { x = _x; y = _y; }
 };
 
 class Line {
   ALLEGRO_COLOR color;
   std::vector<Point> positions;
-  float THICKNESS, speed, angle;
+  double THICKNESS, speed, angle;
   KURVE_KEYS left_key, right_key;
 
   public:
-  float current_x, current_y;
+  double current_x, current_y;
   Line (ALLEGRO_COLOR, KURVE_KEYS, KURVE_KEYS);
   void spawn(Point);
   void draw(void);
-  void steer(float);
+  void steer(double);
   void update(void);
   void remember_position(Point);
   void remember_current_position(void);
@@ -115,8 +115,8 @@ void Line::remember_current_position() {
 
 void Line::update() {
   // Move
-  float delta_x = cos(this->angle * M_PI / 180) * this->speed;
-  float delta_y = sin(this->angle * M_PI / 180) * this->speed;
+  double delta_x = cos(this->angle * M_PI / 180) * this->speed;
+  double delta_y = sin(this->angle * M_PI / 180) * this->speed;
 
   this->current_x += delta_x;
   this->current_y += delta_y;
@@ -131,8 +131,8 @@ void Line::update() {
   }
 }
 
-void Line::steer(float direction) {
-  const float MAX_ANGLE_CHANGE = 2;
+void Line::steer(double direction) {
+  const double MAX_ANGLE_CHANGE = 2;
 
   this->angle += MAX_ANGLE_CHANGE * direction;
   this->angle = fmod(this->angle, 360);
@@ -141,7 +141,7 @@ void Line::steer(float direction) {
 }
 
 void Line::draw() {
-  float prev_x = 0, prev_y = 0, x = 0, y = 0;
+  double prev_x = 0, prev_y = 0, x = 0, y = 0;
   bool first_run = true;
 
   for (auto iter = this->positions.begin();
