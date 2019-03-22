@@ -32,8 +32,12 @@ void Line::update(bool *pressed_keys) {
   this->current_x += delta_x;
   this->current_y += delta_y;
 
+  // Simulate a deadly border, while leaving some room to see if a line
+  // keeps moving (alive), or not (not alive).
   // TODO: replace pseudo test borders with real ones
-  if (this->current_x > SCREEN_WIDTH - 50 || this->current_x < 50) {
+  if (this->current_x > SCREEN_WIDTH - 25 || this->current_x < 25 ||
+      this->current_y > SCREEN_HEIGHT - 25 || this-> current_y < 25) {
+
     this->alive = false;
   }
 
