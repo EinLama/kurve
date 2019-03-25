@@ -26,8 +26,8 @@ void Line::update(bool *pressed_keys) {
   if (!this->alive) { return; }
 
   // Move
-  double delta_x = cos(this->angle * M_PI / 180) * this->speed;
-  double delta_y = sin(this->angle * M_PI / 180) * this->speed;
+  double delta_x = cos(this->angle * ALLEGRO_PI / 180) * this->speed;
+  double delta_y = sin(this->angle * ALLEGRO_PI / 180) * this->speed;
 
   this->current_x += delta_x;
   this->current_y += delta_y;
