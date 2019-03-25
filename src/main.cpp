@@ -9,7 +9,6 @@
  */
 
 #include <stdio.h>
-#include <math.h>
 #include <vector>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
@@ -162,6 +161,8 @@ int main(int argc, char *argv[])
   if (timer) al_destroy_timer(timer);
   if (display) al_destroy_display(display);
   if (event_queue) al_destroy_event_queue(event_queue);
+
+  al_uninstall_system();
 
   return 0;
 }
