@@ -87,8 +87,11 @@ int main(int argc, char *argv[])
   al_register_event_source(event_queue, al_get_keyboard_event_source());
   al_register_event_source(event_queue, al_get_timer_event_source(timer));
 
+  ALLEGRO_COLOR bg_color = al_map_rgb(50, 50, 50);
+  ALLEGRO_BITMAP *previous_buffer = NULL;
+
   // Display a black screen
-  al_clear_to_color(al_map_rgb(0, 0, 0));
+  al_clear_to_color(bg_color);
   al_flip_display();
 
   // Start the timer
@@ -139,14 +142,20 @@ int main(int argc, char *argv[])
       }
     }
 
+    if (previous_buffer != NULL) {
+      al_lock_bitmap(previous_buffer, ALLEGRO_LOCK_READONLY, al_get_bitmap_format(previous_buffer));
+    }
     for (auto player = players.begin(); player != players.end(); ++player) {
-      player->update(pressed_keys);
+      player->update(pressed_keys, previous_buffer);
+    }
+    if (previous_buffer != NULL) {
+      al_unlock_bitmap(previous_buffer);
     }
 
     // Check if we need to redraw
     if (redraw && al_is_event_queue_empty(event_queue)) {
       // Redraw
-      al_clear_to_color(al_map_rgb(50, 50, 50));
+      al_clear_to_color(bg_color);
 
       for (auto player = players.begin(); player != players.end(); ++player) {
         player->draw();
@@ -154,8 +163,13 @@ int main(int argc, char *argv[])
 
       al_flip_display();
       redraw = false;
+
+      if (previous_buffer != NULL) {
+        al_destroy_bitmap(previous_buffer);
+      }
+      previous_buffer = al_clone_bitmap(al_get_backbuffer(display));
     }
-  } 
+  }
 
   // Clean up
   if (timer) al_destroy_timer(timer);

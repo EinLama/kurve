@@ -21,7 +21,7 @@ class Line {
   void spawn(Point);
   void draw(void);
   void steer(double);
-  void update(bool*);
+  void update(bool*, ALLEGRO_BITMAP*);
   void remember_position(Point);
   void remember_current_position(void);
 };

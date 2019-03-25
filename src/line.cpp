@@ -22,24 +22,43 @@ void Line::remember_current_position() {
   this->remember_position(Point(this->current_x, this->current_y));
 }
 
-void Line::update(bool *pressed_keys) {
+void Line::update(bool *pressed_keys, ALLEGRO_BITMAP *collision_buffer) {
   if (!this->alive) { return; }
 
   // Move
   double delta_x = cos(this->angle * ALLEGRO_PI / 180) * this->speed;
   double delta_y = sin(this->angle * ALLEGRO_PI / 180) * this->speed;
 
-  this->current_x += delta_x;
-  this->current_y += delta_y;
+  const double next_x = this->current_x += delta_x;
+  const double next_y = this->current_y += delta_y;
 
   // Simulate a deadly border, while leaving some room to see if a line
   // keeps moving (alive), or not (not alive).
   // TODO: replace pseudo test borders with real ones
-  if (this->current_x > SCREEN_WIDTH - 25 || this->current_x < 25 ||
-      this->current_y > SCREEN_HEIGHT - 25 || this-> current_y < 25) {
+  if (next_x > SCREEN_WIDTH - 25 || next_x < 25 ||
+      next_y > SCREEN_HEIGHT - 25 || next_y < 25) {
 
     this->alive = false;
   }
+
+  /*
+   * For collision checking, we use the current backbuffer. When there is drawn content
+   * (i.e. *not* the background color) on the coordinate we would like to move next, we have
+   * a collision.
+   */
+  if (collision_buffer != NULL) {
+    ALLEGRO_COLOR pixel_at = al_get_pixel(collision_buffer, next_x, next_y);
+    ALLEGRO_COLOR bg_color = al_map_rgb(50, 50, 50);
+
+    if (pixel_at.r != bg_color.r || pixel_at.g != bg_color.g || pixel_at.b != bg_color.b) {
+      // Collided with something!
+      this->alive = false;
+      return;
+    }
+  }
+
+  this->current_x = next_x;
+  this->current_y = next_y;
 
   // Be controlled:
   if (pressed_keys[this->left_key]) {
