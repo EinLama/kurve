@@ -79,10 +79,18 @@ void Line::draw() {
 
       al_draw_line(prev_x, prev_y, x, y, this->color, this->THICKNESS);
 
+      if (DEBUG_MODE) {
+        al_draw_filled_rectangle(x, y, x+this->THICKNESS, y+this->THICKNESS, al_map_rgb(255, 255, 255));
+      }
+
       prev_x = x;
       prev_y = y;
     }
   }
 
   al_draw_line(prev_x, prev_y, this->current_x, this->current_y, this->color, this->THICKNESS);
+
+  if (DEBUG_MODE) {
+    al_draw_filled_rectangle(this->current_x, this->current_y, this->current_x+this->THICKNESS, this->current_y+this->THICKNESS, al_map_rgb(255, 255, 255));
+  }
 }

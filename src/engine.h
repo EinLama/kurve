@@ -3,6 +3,9 @@
 
 #include <allegro5/allegro.h>
 
+// Enable to draw debug information, such as line positions.
+#define DEBUG_MODE 1
+
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 960
 
