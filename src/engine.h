@@ -26,7 +26,7 @@ enum KURVE_KEYS {
 class Point {
   public:
     double x, y;
-    Point (double _x, double _y) { x = _x; y = _y; }
+    Point (double x, double y) : x(x), y(y) {}
 };
 
 #endif
